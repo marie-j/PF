@@ -1,0 +1,1 @@
+(\f -> \lazy -> (\x -> f (\lazy -> x x))(\x -> f (\lazy -> x x))) (\fib -> \n -> (if (infst n 2) (\lazy -> n) (\lazy -> add (fib 0 (soust n 1)) (fib 0 (soust n 2)))) 0) 0 32
