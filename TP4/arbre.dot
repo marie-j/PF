@@ -1,0 +1,54 @@
+digraph arbre {
+node [fontname="DejaVu-Sans", shape=circle]
+o[color=black, fontcolor=black]
+i[color=black, fontcolor=black]
+d[color=red, fontcolor=red]
+b[color=black, fontcolor=black]
+a[color=black, fontcolor=black]
+c[color=black, fontcolor=black]
+f[color=black, fontcolor=black]
+e[color=black, fontcolor=black]
+g[color=black, fontcolor=black]
+h[color=red, fontcolor=red]
+l[color=black, fontcolor=black]
+j[color=black, fontcolor=black]
+k[color=red, fontcolor=red]
+m[color=black, fontcolor=black]
+n[color=red, fontcolor=red]
+w[color=black, fontcolor=black]
+r[color=black, fontcolor=black]
+q[color=black, fontcolor=black]
+p[color=red, fontcolor=red]
+t[color=red, fontcolor=red]
+s[color=black, fontcolor=black]
+u[color=black, fontcolor=black]
+v[color=red, fontcolor=red]
+y[color=black, fontcolor=black]
+x[color=black, fontcolor=black]
+z[color=black, fontcolor=black]
+o -> i
+i -> d
+d -> b
+b -> a
+b -> c
+d -> f
+f -> e
+f -> g
+g -> h
+i -> l
+l -> j
+j -> k
+l -> m
+m -> n
+o -> w
+w -> r
+r -> q
+q -> p
+r -> t
+t -> s
+t -> u
+u -> v
+w -> y
+y -> x
+y -> z
+}
