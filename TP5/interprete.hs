@@ -378,12 +378,12 @@ instance Monad SimpleM where
   (S v) >>= f = f v
 
 -- pour compiler sur une version plus récente
-instance Applicative SimpleM where
-     pure  = return
-     (<*>) = ap
-
-instance Functor SimpleM where
-     fmap  = liftM
+-- instance Applicative SimpleM where
+--      pure  = return
+--      (<*>) = ap
+--
+-- instance Functor SimpleM where
+--      fmap  = liftM
 
 -- Q30:
 
@@ -441,12 +441,12 @@ instance Monad TraceM where
                       T(t1,b) -> T (t ++ t1,b)
 
 -- pour compiler sur une version plus récente
-instance Applicative TraceM where
-     pure  = return
-     (<*>) = ap
-
-instance Functor TraceM where
-     fmap  = liftM
+-- instance Applicative TraceM where
+--      pure  = return
+--      (<*>) = ap
+--
+-- instance Functor TraceM where
+--      fmap  = liftM
 
 interpreteMT :: InterpreteM TraceM
 interpreteMT = interpreteM
@@ -483,12 +483,12 @@ instance Monad ErreurM where
     (Succes v) >>= f = f v
 
 --pour compiler sur une version plus récente
-instance Applicative ErreurM where
-     pure  = return
-     (<*>) = ap
-
-instance Functor ErreurM where
-      fmap  = liftM
+-- instance Applicative ErreurM where
+--      pure  = return
+--      (<*>) = ap
+--
+-- instance Functor ErreurM where
+--       fmap  = liftM
 
 -- Q35:
 
@@ -517,11 +517,11 @@ instance Monad m => Injectable m Integer where
 
 instance (Monad m, Injectable m t) => Injectable m (Bool -> t) where
     injecte f = VFonctionM (\val -> case val of
-				     VLitteralM (Bool b) -> return $ injecte $ f b)
+                 VLitteralM (Bool b) -> return $ injecte $ (f b))
 
 instance (Monad m, Injectable m t) => Injectable m (Integer -> t) where
     injecte f = VFonctionM ( \val -> case val of
-				      VLitteralM (Entier e) -> return $ injecte $ f e)
+                 VLitteralM (Entier e) -> return $ injecte $ (f e))
 
 -- Q38:
 
@@ -533,20 +533,20 @@ envM = [ ("add",   injecte ((+) :: Integer -> Integer -> Integer))
        , ("et",    injecte (&&))
        , ("ou",    injecte (||))
        , ("non",   injecte not)
-	, ("if",  ifM)
-	, ("infst",infst) ]
+       , ("if",  ifM)
+       , ("infst",infst) ]
 
--- main:: IO()
---
--- main = do print "Welcome to minilang ! Please write what you need to know and minilang will just answer, if you want to exit just write quit"
---           boucle
---           where boucle = do putStr "minilang> "
---                             hFlush stdout
---                             cmd <- getLine
---                             if cmd == "quit"
---                               then putStrLn "you're exiting minilang"
---                               else do print (unsafePerformIO(interpreteM envM (ras cmd)))
---                                       boucle
+main:: IO()
+
+main = do print "Welcome to minilang ! Please write what you need to know and minilang will just answer, if you want to exit just write quit"
+          boucle
+          where boucle = do putStr "minilang> "
+                            hFlush stdout
+                            cmd <- getLine
+                            if cmd == "quit"
+                              then putStrLn "you're exiting minilang"
+                              else do print (unsafePerformIO(interpreteM envM (ras cmd)))
+                                      boucle
 
 -- Pousse-café : Interprète parallèle
 
@@ -569,16 +569,45 @@ infst = VFonctionM (\x -> case x of
 
 -- Q41:
 
+envPar :: Monad m => Environnement (ValeurM m)
+envPar = [ ("add",   injecte (addPar :: Integer -> Integer -> Integer))
+       , ("soust", injecte (soustPar :: Integer -> Integer -> Integer))
+       , ("if",  ifM)
+       , ("infst",injecte (infstPar::Integer -> Integer -> Bool))]
 
-main:: IO()
+addPar::Integer ->  Integer -> Integer
 
-main = do print "Welcome to minilang ! Please write what you need to know and minilang will just answer, if you want to exit just write quit"
-          boucle
-          where boucle = do putStr "minilang> "
-                            hFlush stdout
-                            cmd <- getLine
-                            if cmd == "quit"
-                              then putStrLn "you're exiting minilang"
-                              else do print (unsafePerformIO(interpreteM envM (ras cmd)))
-                                      boucle
---
+addPar x y = x `par` (y `pseq` x + y)
+
+soustPar::Integer -> Integer -> Integer
+
+soustPar x y = x `par` (y `pseq` (x - y))
+
+
+infstPar::Integer -> Integer -> Bool
+
+infstPar x y = x `par` (y `pseq` (x < y))
+
+force (App exp1 exp2) = force exp1 `par` force exp2
+force (Lam nom expr) = force expr
+force expr = expr `pseq` ()
+
+aux:: Monad m => m (ValeurM m) -> m (ValeurM m) -> m (ValeurM m)
+
+aux mon1 mon2 = mon1 >>= \f   ->
+                mon2 >>= \val ->
+                case f of
+                  VFonctionM g -> g val
+                  _            -> fail "not a function"
+
+interpretePar :: Monad m => Environnement (ValeurM m) -> Expression -> m (ValeurM m)
+
+interpretePar envs (Lit x)         = return (VLitteralM x)
+
+interpretePar envs (Var nom)       = case lookup nom envs of
+                                       Nothing  -> fail "not in the environment"
+                                       Just val -> return val
+
+interpretePar envs (Lam nom expr)  = force expr `pseq` return (VFonctionM(\valM  -> interpretePar ((nom,valM):envs) expr))
+
+interpretePar envs (App exp1 exp2) = force exp1 `par`(force exp2 `pseq` aux (interpretePar envs exp1) (interpretePar envs exp2))
