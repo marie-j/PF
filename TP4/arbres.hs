@@ -82,7 +82,7 @@ estCompletRec:: Arbre c a -> Bool
 
 estCompletRec Feuille                            = True
 estCompletRec (Noeud _ _ filsGauche filsDroit) | hauteur filsGauche == hauteur filsDroit = estCompletRec filsGauche && estCompletRec filsDroit
-                                                 | otherwise = False
+                                               | otherwise = False
 
 estComplet::Arbre c a -> Bool
 
